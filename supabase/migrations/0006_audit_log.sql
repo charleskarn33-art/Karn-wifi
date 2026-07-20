@@ -44,16 +44,21 @@ begin
     v_record_id := old.id;
   else
     v_record_id := new.id;
-    if tg_table_name in ('income', 'expenses') and new.status is distinct from old.status then
-      v_action := case new.status
-        when 'submitted' then 'submit'
-        when 'approved' then 'approve'
-        when 'manager_approved' then 'approve'
-        when 'rejected' then 'reject'
-        else 'update'
-      end;
-    else
-      v_action := 'update';
+    v_action := 'update';
+    -- Nested IFs (not a single "a and b" boolean expression) because
+    -- Postgres does not guarantee short-circuit evaluation of AND/OR --
+    -- new.status would otherwise be accessed even for tables (e.g. profiles)
+    -- that have no such column, raising "record has no field status".
+    if tg_table_name in ('income', 'expenses') then
+      if new.status is distinct from old.status then
+        v_action := case new.status
+          when 'submitted' then 'submit'
+          when 'approved' then 'approve'
+          when 'manager_approved' then 'approve'
+          when 'rejected' then 'reject'
+          else 'update'
+        end;
+      end if;
     end if;
   end if;
 
