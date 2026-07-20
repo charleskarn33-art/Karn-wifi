@@ -82,7 +82,7 @@ export default async function ExpenseDetailPage({ params }: { params: Promise<{ 
 
           {(canManagerDecide || canAdminDecide) && (
             <div className="mt-6 border-t border-black/5 dark:border-white/10 pt-4">
-              <ExpenseDecisionActionsWrapper id={entry.id} status={entry.status} />
+              <ExpenseDecisionActionsWrapper id={entry.id} role={profile.role} />
             </div>
           )}
         </Card>

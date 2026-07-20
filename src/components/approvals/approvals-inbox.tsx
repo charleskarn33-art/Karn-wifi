@@ -90,6 +90,11 @@ export function ApprovalsInbox({ role }: { role: UserRole }) {
         <div className="space-y-3">
           {expenses.map((entry) => {
             const isManagerStage = entry.status === "submitted";
+            // Admins hold full authority at any stage: approving a
+            // still-"submitted" expense goes straight to final approval
+            // (the DB trigger backfills the manager sign-off automatically)
+            // instead of requiring a manager-approve click first.
+            const useAdminApprove = role === "admin";
             return (
               <div key={entry.id} className="glass-card flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
@@ -103,9 +108,9 @@ export function ApprovalsInbox({ role }: { role: UserRole }) {
                   </p>
                 </div>
                 <DecisionActions
-                  approveUrl={`/api/expenses/${entry.id}/${isManagerStage ? "manager-approve" : "admin-approve"}`}
+                  approveUrl={`/api/expenses/${entry.id}/${useAdminApprove ? "admin-approve" : "manager-approve"}`}
                   rejectUrl={`/api/expenses/${entry.id}/reject`}
-                  approveLabel={isManagerStage ? "Approve" : "Final Approve"}
+                  approveLabel={useAdminApprove ? "Approve (Final)" : "Approve"}
                   size="sm"
                   onDone={refetch}
                 />
