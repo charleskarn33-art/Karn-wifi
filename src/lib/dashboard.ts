@@ -19,6 +19,7 @@ export interface DashboardStats {
   incomeThisMonth: number;
   expensesThisMonth: number;
   netProfit: number;
+  balance: number;
   pendingIncomeCount: number;
   pendingIncomeAmount: number;
   pendingExpenseCount: number;
@@ -56,6 +57,8 @@ export async function getDashboardData(): Promise<DashboardData> {
     pendingExpenseRes,
     incomeYearRes,
     expensesYearRes,
+    incomeAllTimeRes,
+    expensesAllTimeRes,
   ] = await Promise.all([
     supabase
       .from("income")
@@ -89,6 +92,9 @@ export async function getDashboardData(): Promise<DashboardData> {
       .select("amount, entry_date")
       .eq("status", "approved")
       .gte("entry_date", yearAgo.slice(0, 10)),
+    // All-time totals (no date filter) to compute the running account balance.
+    supabase.from("income").select("amount").eq("status", "approved"),
+    supabase.from("expenses").select("amount").eq("status", "approved"),
   ]);
 
   const sum = (rows: { amount: number }[] | null) =>
@@ -98,11 +104,14 @@ export async function getDashboardData(): Promise<DashboardData> {
   const incomeThisMonth = sum(incomeMonthRes.data);
   const expensesThisMonth = sum(expensesMonthRes.data);
 
+  const balance = sum(incomeAllTimeRes.data) - sum(expensesAllTimeRes.data);
+
   const stats: DashboardStats = {
     incomeToday,
     incomeThisMonth,
     expensesThisMonth,
     netProfit: incomeThisMonth - expensesThisMonth,
+    balance,
     pendingIncomeCount: pendingIncomeRes.data?.length ?? 0,
     pendingIncomeAmount: sum(pendingIncomeRes.data),
     pendingExpenseCount: pendingExpenseRes.data?.length ?? 0,
