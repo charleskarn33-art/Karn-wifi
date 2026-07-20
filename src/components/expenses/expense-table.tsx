@@ -47,11 +47,11 @@ export function ExpenseTable({ currentUserId, role }: { currentUserId: string; r
   }
 
   async function deleteEntry(id: string) {
-    if (!confirm("Delete this draft expense?")) return;
+    if (!confirm("Delete this expense? This cannot be undone.")) return;
     const res = await fetch(`/api/expenses/${id}`, { method: "DELETE" });
     const json = await res.json();
     if (!res.ok) return toast.error(json.error);
-    toast.success("Draft deleted");
+    toast.success("Expense deleted");
     refetch();
   }
 
@@ -100,7 +100,10 @@ export function ExpenseTable({ currentUserId, role }: { currentUserId: string; r
           <MobileCardList>
             {data.map((entry) => {
               const isOwner = entry.requested_by === currentUserId;
-              const editable = isOwner && (entry.status === "draft" || entry.status === "rejected");
+              const ownerEditable = isOwner && (entry.status === "draft" || entry.status === "rejected");
+              // Admins can correct or delete any expense regardless of its
+              // stage; the owner-only Submit action doesn't apply to them.
+              const adminEditable = role === "admin" && !ownerEditable;
               return (
                 <MobileCardRow key={entry.id}>
                   <MobileCardHeader>
@@ -119,12 +122,12 @@ export function ExpenseTable({ currentUserId, role }: { currentUserId: string; r
                       <MobileCardMetaItem label="Requested By" value={entry.requested_by_profile?.full_name ?? "—"} />
                     )}
                   </MobileCardMeta>
-                  {editable && (
+                  {(ownerEditable || adminEditable) && (
                     <MobileCardActions>
                       <Button size="icon" variant="outline" title="Edit" onClick={() => router.push(`/expenses/${entry.id}`)}>
                         <Pencil className="h-4 w-4" />
                       </Button>
-                      {entry.status === "draft" && (
+                      {ownerEditable && entry.status === "draft" && (
                         <Button size="icon" variant="outline" title="Submit" onClick={() => submitEntry(entry.id)}>
                           <Send className="h-4 w-4" />
                         </Button>
@@ -154,7 +157,8 @@ export function ExpenseTable({ currentUserId, role }: { currentUserId: string; r
             <Tbody>
               {data.map((entry) => {
                 const isOwner = entry.requested_by === currentUserId;
-                const editable = isOwner && (entry.status === "draft" || entry.status === "rejected");
+                const ownerEditable = isOwner && (entry.status === "draft" || entry.status === "rejected");
+                const adminEditable = role === "admin" && !ownerEditable;
                 return (
                   <Tr key={entry.id}>
                     <Td className="font-medium">
@@ -171,12 +175,12 @@ export function ExpenseTable({ currentUserId, role }: { currentUserId: string; r
                     </Td>
                     <Td>
                       <div className="flex justify-end gap-1.5">
-                        {editable && (
+                        {(ownerEditable || adminEditable) && (
                           <>
                             <Button size="icon" variant="outline" title="Edit" onClick={() => router.push(`/expenses/${entry.id}`)}>
                               <Pencil className="h-4 w-4" />
                             </Button>
-                            {entry.status === "draft" && (
+                            {ownerEditable && entry.status === "draft" && (
                               <Button size="icon" variant="outline" title="Submit" onClick={() => submitEntry(entry.id)}>
                                 <Send className="h-4 w-4" />
                               </Button>

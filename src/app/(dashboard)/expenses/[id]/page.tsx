@@ -7,6 +7,8 @@ import { ExpenseForm } from "@/components/expenses/expense-form";
 import { ExpenseStatusBadge } from "@/components/ui/badge";
 import { ReceiptViewButton } from "@/components/expenses/receipt-view-button";
 import { ExpenseDecisionActionsWrapper } from "./decision-wrapper";
+import { AdminEditModal } from "./admin-edit-modal";
+import { AdminDeleteButton } from "./admin-delete-button";
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/utils";
 import { EXPENSE_CATEGORY_LABELS } from "@/lib/validations/expense";
 import type { ExpenseWithRelations } from "@/types/database";
@@ -33,6 +35,10 @@ export default async function ExpenseDetailPage({ params }: { params: Promise<{ 
   const editable = isOwner && (entry.status === "draft" || entry.status === "rejected");
   const canManagerDecide = profile.role !== "staff" && entry.status === "submitted";
   const canAdminDecide = profile.role === "admin" && entry.status === "manager_approved";
+  // An admin can correct or delete any expense regardless of its stage --
+  // shown alongside (not instead of) the approve/reject actions below,
+  // rather than swapping the whole page into the owner's edit form.
+  const adminOverride = profile.role === "admin" && !editable;
 
   return (
     <div className="space-y-6 py-6 max-w-2xl">
@@ -52,6 +58,12 @@ export default async function ExpenseDetailPage({ params }: { params: Promise<{ 
         <Card>
           <CardHeader>
             <CardTitle>Details</CardTitle>
+            {adminOverride && (
+              <div className="flex gap-2">
+                <AdminEditModal expense={entry} userId={profile.id} />
+                <AdminDeleteButton id={entry.id} />
+              </div>
+            )}
           </CardHeader>
           <dl className="grid grid-cols-2 gap-4 text-sm">
             <Detail label="Amount" value={formatCurrency(entry.amount)} />

@@ -14,9 +14,19 @@ import type { Expense } from "@/types/database";
 interface ExpenseFormProps {
   expense?: Expense;
   userId: string;
+  /**
+   * "workflow" (default) shows the normal Save as draft / Submit for
+   * approval pair and navigates back to the list on save -- for the
+   * owner creating or editing a draft/rejected expense.
+   * "correction" shows a single Save changes button that just patches the
+   * fields with no status/submit side effect -- for an admin fixing up an
+   * expense that's already in or past the approval workflow.
+   */
+  mode?: "workflow" | "correction";
+  onSaved?: () => void;
 }
 
-export function ExpenseForm({ expense, userId }: ExpenseFormProps) {
+export function ExpenseForm({ expense, userId, mode = "workflow", onSaved }: ExpenseFormProps) {
   const router = useRouter();
   const isEdit = Boolean(expense);
   const [receiptPath, setReceiptPath] = useState<string | null>(expense?.receipt_url ?? null);
@@ -64,8 +74,12 @@ export function ExpenseForm({ expense, userId }: ExpenseFormProps) {
         toast.success(isEdit ? "Expense updated" : "Draft saved");
       }
 
-      router.push("/expenses");
-      router.refresh();
+      if (onSaved) {
+        onSaved();
+      } else {
+        router.push("/expenses");
+        router.refresh();
+      }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Something went wrong");
     }
@@ -113,17 +127,25 @@ export function ExpenseForm({ expense, userId }: ExpenseFormProps) {
       </div>
 
       <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
-        <Button
-          type="button"
-          variant="secondary"
-          isLoading={isSubmitting}
-          onClick={handleSubmit((values) => save(values, false))}
-        >
-          Save as draft
-        </Button>
-        <Button type="button" isLoading={isSubmitting} onClick={handleSubmit((values) => save(values, true))}>
-          Submit for approval
-        </Button>
+        {mode === "correction" ? (
+          <Button type="button" isLoading={isSubmitting} onClick={handleSubmit((values) => save(values, false))}>
+            Save changes
+          </Button>
+        ) : (
+          <>
+            <Button
+              type="button"
+              variant="secondary"
+              isLoading={isSubmitting}
+              onClick={handleSubmit((values) => save(values, false))}
+            >
+              Save as draft
+            </Button>
+            <Button type="button" isLoading={isSubmitting} onClick={handleSubmit((values) => save(values, true))}>
+              Submit for approval
+            </Button>
+          </>
+        )}
       </div>
     </form>
   );
