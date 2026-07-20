@@ -36,7 +36,7 @@ export function Modal({ open, onClose, title, description, children, className }
       />
       <div
         className={cn(
-          "glass relative w-full sm:max-w-lg max-h-[90vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl bg-[var(--background)]/95 p-6 animate-pop-in",
+          "glass relative w-full sm:max-w-lg max-h-[90vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl bg-[var(--background)]/95 p-6 pb-[calc(1.5rem_+_env(safe-area-inset-bottom))] sm:pb-6 animate-pop-in",
           className,
         )}
         role="dialog"

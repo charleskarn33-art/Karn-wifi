@@ -11,7 +11,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <Sidebar role={profile.role} />
       <div className="flex min-h-dvh flex-1 flex-col">
         <Topbar profile={profile} />
-        <main className="flex-1 px-4 pb-24 lg:px-6 lg:pb-8">{children}</main>
+        <main className="flex-1 px-4 pb-[calc(6rem_+_env(safe-area-inset-bottom))] lg:px-6 lg:pb-8">
+          {children}
+        </main>
       </div>
       <MobileNav role={profile.role} />
     </div>

@@ -1,9 +1,12 @@
 import { type HTMLAttributes, type TdHTMLAttributes, type ThHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
+// Hidden below `sm`: every list that renders a <Table> pairs it with a
+// mobile card list (see MobileCardList) rendered only below that breakpoint,
+// since a horizontally-scrolling data table is a poor phone experience.
 export function Table({ className, ...props }: HTMLAttributes<HTMLTableElement>) {
   return (
-    <div className="w-full overflow-x-auto rounded-2xl border border-black/5 dark:border-white/10">
+    <div className="hidden w-full overflow-x-auto rounded-2xl border border-black/5 dark:border-white/10 sm:block">
       <table className={cn("w-full min-w-[640px] text-sm border-collapse", className)} {...props} />
     </div>
   );

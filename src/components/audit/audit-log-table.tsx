@@ -7,6 +7,14 @@ import { Card } from "@/components/ui/card";
 import { SearchInput } from "@/components/ui/search-input";
 import { Select } from "@/components/ui/input";
 import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/ui/table";
+import {
+  MobileCardList,
+  MobileCardRow,
+  MobileCardHeader,
+  MobileCardMeta,
+  MobileCardMetaItem,
+  MobileCardActions,
+} from "@/components/ui/mobile-card-list";
 import { Pagination } from "@/components/ui/pagination";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -63,6 +71,31 @@ export function AuditLogTable() {
         <EmptyState icon={History} title="No audit events found" />
       ) : (
         <>
+          <MobileCardList>
+            {data.map((entry) => (
+              <MobileCardRow key={entry.id}>
+                <MobileCardHeader>
+                  <div className="min-w-0">
+                    <p className="font-medium capitalize">{entry.table_name}</p>
+                    <p className="text-xs text-muted">{entry.user_email ?? "System"}</p>
+                  </div>
+                  <Badge tone={ACTION_TONE[entry.action]} className="capitalize">
+                    {entry.action}
+                  </Badge>
+                </MobileCardHeader>
+                <MobileCardMeta>
+                  <MobileCardMetaItem label="Timestamp" value={formatDateTime(entry.created_at)} />
+                  <MobileCardMetaItem label="Record" value={<span className="font-mono">{entry.record_id?.slice(0, 8) ?? "—"}</span>} />
+                </MobileCardMeta>
+                <MobileCardActions>
+                  <Button size="sm" variant="outline" onClick={() => setSelected(entry)}>
+                    <Eye className="h-4 w-4" /> Details
+                  </Button>
+                </MobileCardActions>
+              </MobileCardRow>
+            ))}
+          </MobileCardList>
+
           <Table>
             <Thead>
               <Tr>

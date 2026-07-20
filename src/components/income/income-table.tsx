@@ -11,6 +11,14 @@ import { Button } from "@/components/ui/button";
 import { SearchInput } from "@/components/ui/search-input";
 import { Select } from "@/components/ui/input";
 import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/ui/table";
+import {
+  MobileCardList,
+  MobileCardRow,
+  MobileCardHeader,
+  MobileCardMeta,
+  MobileCardMetaItem,
+  MobileCardActions,
+} from "@/components/ui/mobile-card-list";
 import { Pagination } from "@/components/ui/pagination";
 import { IncomeStatusBadge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -58,7 +66,7 @@ export function IncomeTable({ currentUserId, role }: { currentUserId: string; ro
             <option value="rejected">Rejected</option>
           </Select>
         </div>
-        <Button onClick={() => router.push("/income/new")}>
+        <Button className="w-full sm:w-auto" onClick={() => router.push("/income/new")}>
           <Plus className="h-4 w-4" /> New Income
         </Button>
       </div>
@@ -78,6 +86,49 @@ export function IncomeTable({ currentUserId, role }: { currentUserId: string; ro
         />
       ) : (
         <>
+          <MobileCardList>
+            {data.map((entry) => {
+              const isOwner = entry.recorded_by === currentUserId;
+              const editable = isOwner && (entry.status === "draft" || entry.status === "rejected");
+              return (
+                <MobileCardRow key={entry.id}>
+                  <MobileCardHeader>
+                    <div className="min-w-0">
+                      <Link href={`/income/${entry.id}`} className="font-medium hover:underline">
+                        {entry.customer_name}
+                      </Link>
+                      <p className="text-xs text-muted">{entry.voucher_package}</p>
+                    </div>
+                    <IncomeStatusBadge status={entry.status} />
+                  </MobileCardHeader>
+                  <MobileCardMeta>
+                    <MobileCardMetaItem label="Amount" value={formatCurrency(entry.amount)} />
+                    <MobileCardMetaItem label="Method" value={<span className="capitalize">{entry.payment_method.replace("_", " ")}</span>} />
+                    <MobileCardMetaItem label="Date" value={formatDate(entry.entry_date)} />
+                    {role !== "staff" && (
+                      <MobileCardMetaItem label="Recorded By" value={entry.recorded_by_profile?.full_name ?? "—"} />
+                    )}
+                  </MobileCardMeta>
+                  {editable && (
+                    <MobileCardActions>
+                      <Button size="icon" variant="outline" title="Edit" onClick={() => router.push(`/income/${entry.id}`)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      {entry.status === "draft" && (
+                        <Button size="icon" variant="outline" title="Submit" onClick={() => submitEntry(entry.id)}>
+                          <Send className="h-4 w-4" />
+                        </Button>
+                      )}
+                      <Button size="icon" variant="outline" title="Delete" onClick={() => deleteEntry(entry.id)}>
+                        <Trash2 className="h-4 w-4 text-danger-500" />
+                      </Button>
+                    </MobileCardActions>
+                  )}
+                </MobileCardRow>
+              );
+            })}
+          </MobileCardList>
+
           <Table>
             <Thead>
               <Tr>

@@ -8,6 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { StatCard } from "@/components/ui/stat-card";
 import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/ui/table";
+import {
+  MobileCardList,
+  MobileCardRow,
+  MobileCardHeader,
+  MobileCardMeta,
+  MobileCardMetaItem,
+} from "@/components/ui/mobile-card-list";
 import { TableSkeleton } from "@/components/ui/skeleton";
 import { formatCurrency, formatDate, cn } from "@/lib/utils";
 import { exportReportToExcel } from "@/lib/export/excel";
@@ -89,37 +96,41 @@ export function ReportsView() {
               </button>
             ))}
           </div>
-          <div className="flex flex-wrap items-end gap-3">
-            <div>
-              <Label htmlFor="from">From</Label>
-              <Input
-                id="from"
-                type="date"
-                value={from}
-                onChange={(e) => {
-                  setPreset("custom");
-                  setFrom(e.target.value);
-                }}
-              />
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+            <div className="grid grid-cols-2 gap-3 sm:flex sm:gap-3">
+              <div>
+                <Label htmlFor="from">From</Label>
+                <Input
+                  id="from"
+                  type="date"
+                  value={from}
+                  onChange={(e) => {
+                    setPreset("custom");
+                    setFrom(e.target.value);
+                  }}
+                />
+              </div>
+              <div>
+                <Label htmlFor="to">To</Label>
+                <Input
+                  id="to"
+                  type="date"
+                  value={to}
+                  onChange={(e) => {
+                    setPreset("custom");
+                    setTo(e.target.value);
+                  }}
+                />
+              </div>
             </div>
-            <div>
-              <Label htmlFor="to">To</Label>
-              <Input
-                id="to"
-                type="date"
-                value={to}
-                onChange={(e) => {
-                  setPreset("custom");
-                  setTo(e.target.value);
-                }}
-              />
+            <div className="grid grid-cols-2 gap-3 sm:flex">
+              <Button variant="secondary" onClick={handleExportExcel} disabled={!report}>
+                <FileSpreadsheet className="h-4 w-4" /> Excel
+              </Button>
+              <Button variant="secondary" onClick={handleExportPdf} disabled={!report}>
+                <FileText className="h-4 w-4" /> PDF
+              </Button>
             </div>
-            <Button variant="secondary" onClick={handleExportExcel} disabled={!report}>
-              <FileSpreadsheet className="h-4 w-4" /> Excel
-            </Button>
-            <Button variant="secondary" onClick={handleExportPdf} disabled={!report}>
-              <FileText className="h-4 w-4" /> PDF
-            </Button>
           </div>
         </div>
       </Card>
@@ -141,6 +152,23 @@ export function ReportsView() {
 
           <Card>
             <h3 className="mb-4 text-base font-semibold">Income ({report.income.length})</h3>
+            <MobileCardList>
+              {report.income.map((r) => (
+                <MobileCardRow key={r.id}>
+                  <MobileCardHeader>
+                    <div className="min-w-0">
+                      <p className="font-medium">{r.customer_name}</p>
+                      <p className="text-xs text-muted">{r.voucher_package}</p>
+                    </div>
+                    <p className="font-medium">{formatCurrency(r.amount)}</p>
+                  </MobileCardHeader>
+                  <MobileCardMeta>
+                    <MobileCardMetaItem label="Date" value={formatDate(r.entry_date)} />
+                    <MobileCardMetaItem label="Recorded By" value={r.recorded_by_profile?.full_name ?? "—"} />
+                  </MobileCardMeta>
+                </MobileCardRow>
+              ))}
+            </MobileCardList>
             <Table>
               <Thead>
                 <Tr>
@@ -167,6 +195,20 @@ export function ReportsView() {
 
           <Card>
             <h3 className="mb-4 text-base font-semibold">Expenses ({report.expenses.length})</h3>
+            <MobileCardList>
+              {report.expenses.map((r) => (
+                <MobileCardRow key={r.id}>
+                  <MobileCardHeader>
+                    <p className="font-medium">{EXPENSE_CATEGORY_LABELS[r.category] ?? r.category}</p>
+                    <p className="font-medium">{formatCurrency(r.amount)}</p>
+                  </MobileCardHeader>
+                  <MobileCardMeta>
+                    <MobileCardMetaItem label="Date" value={formatDate(r.entry_date)} />
+                    <MobileCardMetaItem label="Requested By" value={r.requested_by_profile?.full_name ?? "—"} />
+                  </MobileCardMeta>
+                </MobileCardRow>
+              ))}
+            </MobileCardList>
             <Table>
               <Thead>
                 <Tr>

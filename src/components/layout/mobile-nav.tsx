@@ -11,7 +11,10 @@ export function MobileNav({ role }: { role: UserRole }) {
   const items = visibleNavItems(role).slice(0, 5);
 
   return (
-    <nav className="glass fixed inset-x-3 bottom-3 z-40 flex items-center justify-around rounded-2xl px-2 py-2 lg:hidden">
+    <nav
+      className="glass fixed inset-x-3 z-40 flex items-center justify-around rounded-2xl px-2 py-2 lg:hidden"
+      style={{ bottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
+    >
       {items.map((item) => {
         const active = pathname === item.href || pathname.startsWith(item.href + "/");
         return (

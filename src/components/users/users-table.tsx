@@ -10,6 +10,14 @@ import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { Input, Label, FieldError, Select } from "@/components/ui/input";
 import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/ui/table";
+import {
+  MobileCardList,
+  MobileCardRow,
+  MobileCardHeader,
+  MobileCardMeta,
+  MobileCardMetaItem,
+  MobileCardActions,
+} from "@/components/ui/mobile-card-list";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { TableSkeleton } from "@/components/ui/skeleton";
@@ -82,6 +90,58 @@ export function UsersTable({ currentUserId }: { currentUserId: string }) {
       ) : users.length === 0 ? (
         <EmptyState icon={UsersIcon} title="No users yet" />
       ) : (
+        <>
+        <MobileCardList>
+          {users.map((u) => (
+            <MobileCardRow key={u.id}>
+              <MobileCardHeader>
+                <div className="flex min-w-0 items-center gap-2.5">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-brand-500 to-accent-500 text-xs font-semibold text-white">
+                    {initials(u.full_name || u.email)}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="truncate font-medium">{u.full_name || "—"}</p>
+                    <p className="truncate text-xs text-muted">{u.email}</p>
+                  </div>
+                </div>
+                <button onClick={() => toggleActive(u.id, !u.is_active)} disabled={u.id === currentUserId} className="shrink-0">
+                  <Badge tone={u.is_active ? "success" : "neutral"}>{u.is_active ? "Active" : "Inactive"}</Badge>
+                </button>
+              </MobileCardHeader>
+              <MobileCardMeta>
+                <MobileCardMetaItem
+                  label="Role"
+                  value={
+                    <Select
+                      value={u.role}
+                      disabled={u.id === currentUserId}
+                      onChange={(e) => updateRole(u.id, e.target.value as UserRole)}
+                      className="mt-0.5 w-full py-1.5 text-xs"
+                    >
+                      {Object.entries(ROLE_LABELS).map(([value, label]) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ))}
+                    </Select>
+                  }
+                />
+                <MobileCardMetaItem label="Joined" value={formatDate(u.created_at)} />
+              </MobileCardMeta>
+              <MobileCardActions>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={u.id === currentUserId}
+                  onClick={() => removeUser(u.id)}
+                >
+                  <Trash2 className="h-4 w-4 text-danger-500" /> Delete
+                </Button>
+              </MobileCardActions>
+            </MobileCardRow>
+          ))}
+        </MobileCardList>
+
         <Table>
           <Thead>
             <Tr>
@@ -141,6 +201,7 @@ export function UsersTable({ currentUserId }: { currentUserId: string }) {
             ))}
           </Tbody>
         </Table>
+        </>
       )}
 
       <CreateUserModal open={createOpen} onClose={() => setCreateOpen(false)} onCreated={load} />

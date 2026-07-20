@@ -19,7 +19,7 @@ export function Topbar({ profile }: { profile: Profile }) {
 
   return (
     <>
-      <header className="sticky top-0 z-30 flex items-center justify-between gap-3 px-4 py-4 lg:px-6">
+      <header className="sticky top-0 z-30 flex items-center justify-between gap-3 bg-[var(--background)]/70 backdrop-blur-md px-4 pt-[calc(1rem_+_env(safe-area-inset-top))] pb-4 lg:bg-transparent lg:backdrop-blur-none lg:px-6 lg:pt-4">
         <div className="flex items-center gap-3 lg:hidden">
           <button
             onClick={() => setDrawerOpen(true)}
@@ -44,7 +44,13 @@ export function Topbar({ profile }: { profile: Profile }) {
       {drawerOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setDrawerOpen(false)} />
-          <div className="glass absolute left-0 top-0 h-full w-72 max-w-[85vw] bg-[var(--background)]/95 p-4 animate-fade-in-up">
+          <div
+            className="glass absolute left-0 top-0 h-full w-72 max-w-[85vw] overflow-y-auto bg-[var(--background)]/95 p-4 animate-fade-in-up"
+            style={{
+              paddingTop: "calc(1rem + env(safe-area-inset-top))",
+              paddingBottom: "calc(1rem + env(safe-area-inset-bottom))",
+            }}
+          >
             <div className="mb-6 flex items-center justify-between">
               <Link href="/dashboard" className="flex items-center gap-2" onClick={() => setDrawerOpen(false)}>
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 text-white">
