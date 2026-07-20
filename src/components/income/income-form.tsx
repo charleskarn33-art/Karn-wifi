@@ -40,7 +40,7 @@ export function IncomeForm({ income, onSaved }: IncomeFormProps) {
         },
   });
 
-  async function save(values: IncomeFormValues, submit: boolean) {
+  async function save(values: IncomeFormValues) {
     try {
       const res = await fetch(isEdit ? `/api/income/${income!.id}` : "/api/income", {
         method: isEdit ? "PATCH" : "POST",
@@ -50,17 +50,7 @@ export function IncomeForm({ income, onSaved }: IncomeFormProps) {
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "Something went wrong");
 
-      const id = isEdit ? income!.id : json.data.id;
-
-      if (submit) {
-        const submitRes = await fetch(`/api/income/${id}/submit`, { method: "POST" });
-        const submitJson = await submitRes.json();
-        if (!submitRes.ok) throw new Error(submitJson.error || "Could not submit for approval");
-        toast.success("Income entry submitted for approval");
-      } else {
-        toast.success(isEdit ? "Income entry updated" : "Draft saved");
-      }
-
+      toast.success(isEdit ? "Income entry updated" : "Income recorded");
       onSaved?.();
       router.push("/income");
       router.refresh();
@@ -116,17 +106,9 @@ export function IncomeForm({ income, onSaved }: IncomeFormProps) {
         <FieldError>{errors.description?.message}</FieldError>
       </div>
 
-      <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
-        <Button
-          type="button"
-          variant="secondary"
-          isLoading={isSubmitting}
-          onClick={handleSubmit((values) => save(values, false))}
-        >
-          Save as draft
-        </Button>
-        <Button type="button" isLoading={isSubmitting} onClick={handleSubmit((values) => save(values, true))}>
-          Submit for approval
+      <div className="flex justify-end pt-2">
+        <Button type="button" isLoading={isSubmitting} onClick={handleSubmit(save)}>
+          {isEdit ? "Save changes" : "Record Income"}
         </Button>
       </div>
     </form>

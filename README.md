@@ -7,14 +7,14 @@ Built with **Next.js 15** (App Router), **TypeScript**, **Tailwind CSS v4**, and
 ## Features
 
 - **Auth & roles** — Email/password auth via Supabase, three roles: `admin`, `manager`, `staff`.
-- **Dashboard** — Income today/this month, expenses, net profit, pending counts, daily/weekly/monthly trend charts.
-- **Income module** — Draft → Submit → Approved/Rejected, with search, filters, pagination.
+- **Dashboard** — Running balance, income today/this month, expenses, net profit, pending counts, daily/weekly/monthly trend charts.
+- **Income module** — Recorded and counted immediately, no approval step. Owners and admins can correct/delete an entry afterwards. Search, filters, pagination.
 - **Expense module** — Draft → Submit → Manager Approval → Admin Approval → Reports, with receipt upload to private Supabase Storage.
-- **Approvals inbox** — Unified queue for managers/admins to approve or reject pending items.
+- **Approvals inbox** — Queue for managers/admins to approve or reject pending expenses.
 - **Reports** — Daily/weekly/monthly & custom-range Profit and Loss, export to Excel (`.xlsx`) and PDF.
-- **Notifications** — Realtime in-app notifications for pending approvals, approvals, and rejections.
+- **Notifications** — Realtime in-app notifications for pending expense approvals, approvals, and rejections.
 - **Audit log** — Every create/update/submit/approve/reject/delete recorded with actor, timestamp, and before/after data.
-- **Security** — PostgreSQL Row Level Security everywhere; approval-workflow integrity enforced by database triggers (not just app code).
+- **Security** — PostgreSQL Row Level Security everywhere; expense approval-workflow integrity enforced by database triggers (not just app code).
 - **PWA** — Installable, offline fallback page, app manifest and icons.
 
 ## Tech stack
@@ -72,12 +72,12 @@ public/
 ## Database schema & workflow
 
 - **`profiles`** — one row per Supabase auth user; `role` is `admin | manager | staff`. New signups always default to `staff` (never trusted from client metadata); only admins can promote/demote or (de)activate a user, enforced by a trigger.
-- **`income`** — `draft → submitted → approved | rejected`. Any manager or admin can approve/reject.
+- **`income`** — no approval workflow. Recorded as `approved` immediately; only its owner or an admin may edit/delete a row afterwards.
 - **`expenses`** — `draft → submitted → manager_approved → approved | rejected`. Managers approve the first stage; only admins give final approval that lands the expense in reports.
-- **`notifications`** — written only by triggers (pending approval → reviewers, approved/rejected → the submitter).
+- **`notifications`** — written only by triggers (pending approval → reviewers, approved/rejected → the submitter) for the expense workflow.
 - **`audit_log`** — append-only, written only by a `SECURITY DEFINER` trigger on `income`, `expenses`, and `profiles`; readable by managers/admins only.
 
-Row visibility (who can `SELECT` which rows) is enforced by **RLS policies**. The approval **state machine** (who may transition a record from one status to another, and what fields lock once a stage is reached) is enforced by **`BEFORE UPDATE` trigger functions** (`enforce_income_workflow`, `enforce_expense_workflow`) — this keeps the workflow rules airtight even if a client attempted to call the API directly, bypassing the UI.
+Row visibility (who can `SELECT` which rows) is enforced by **RLS policies**. The expense approval **state machine** (who may transition a record from one status to another, and what fields lock once a stage is reached) is enforced by a **`BEFORE UPDATE` trigger function** (`enforce_expense_workflow`) — this keeps the workflow rules airtight even if a client attempted to call the API directly, bypassing the UI. Income has no workflow to enforce; `enforce_income_ownership` just pins who may edit a row and keeps its status fixed at `approved`.
 
 See `supabase/migrations/` for the full schema, numbered in apply order.
 

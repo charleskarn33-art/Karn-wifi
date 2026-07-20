@@ -20,8 +20,6 @@ export interface DashboardStats {
   expensesThisMonth: number;
   netProfit: number;
   balance: number;
-  pendingIncomeCount: number;
-  pendingIncomeAmount: number;
   pendingExpenseCount: number;
   pendingExpenseAmount: number;
 }
@@ -53,18 +51,17 @@ export async function getDashboardData(): Promise<DashboardData> {
     incomeTodayRes,
     incomeMonthRes,
     expensesMonthRes,
-    pendingIncomeRes,
     pendingExpenseRes,
     incomeYearRes,
     expensesYearRes,
     incomeAllTimeRes,
     expensesAllTimeRes,
   ] = await Promise.all([
-    supabase
-      .from("income")
-      .select("amount")
-      .eq("status", "approved")
-      .gte("entry_date", todayStart.slice(0, 10)),
+    // Income has no approval workflow going forward -- every entry is
+    // inserted as 'approved' and counts immediately. The status filter here
+    // only ever excludes legacy rows explicitly rejected before this
+    // workflow was removed (see migration 0012).
+    supabase.from("income").select("amount").eq("status", "approved").gte("entry_date", todayStart.slice(0, 10)),
     supabase
       .from("income")
       .select("amount")
@@ -77,7 +74,6 @@ export async function getDashboardData(): Promise<DashboardData> {
       .eq("status", "approved")
       .gte("entry_date", monthStart.slice(0, 10))
       .lte("entry_date", monthEnd.slice(0, 10)),
-    supabase.from("income").select("amount").eq("status", "submitted"),
     supabase
       .from("expenses")
       .select("amount")
@@ -112,8 +108,6 @@ export async function getDashboardData(): Promise<DashboardData> {
     expensesThisMonth,
     netProfit: incomeThisMonth - expensesThisMonth,
     balance,
-    pendingIncomeCount: pendingIncomeRes.data?.length ?? 0,
-    pendingIncomeAmount: sum(pendingIncomeRes.data),
     pendingExpenseCount: pendingExpenseRes.data?.length ?? 0,
     pendingExpenseAmount: sum(pendingExpenseRes.data),
   };

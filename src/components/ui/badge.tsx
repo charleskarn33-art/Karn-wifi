@@ -1,6 +1,6 @@
 import { type HTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
-import type { ExpenseStatus, IncomeStatus } from "@/types/database";
+import type { ExpenseStatus } from "@/types/database";
 
 const toneClasses = {
   neutral: "bg-black/5 dark:bg-white/10 text-muted",
@@ -27,13 +27,6 @@ export function Badge({ className, tone = "neutral", ...props }: BadgeProps) {
   );
 }
 
-const INCOME_STATUS_TONE: Record<IncomeStatus, keyof typeof toneClasses> = {
-  draft: "neutral",
-  submitted: "warning",
-  approved: "success",
-  rejected: "danger",
-};
-
 const EXPENSE_STATUS_TONE: Record<ExpenseStatus, keyof typeof toneClasses> = {
   draft: "neutral",
   submitted: "warning",
@@ -49,10 +42,6 @@ const STATUS_LABEL: Record<string, string> = {
   approved: "Approved",
   rejected: "Rejected",
 };
-
-export function IncomeStatusBadge({ status }: { status: IncomeStatus }) {
-  return <Badge tone={INCOME_STATUS_TONE[status]}>{STATUS_LABEL[status]}</Badge>;
-}
 
 export function ExpenseStatusBadge({ status }: { status: ExpenseStatus }) {
   return <Badge tone={EXPENSE_STATUS_TONE[status]}>{STATUS_LABEL[status]}</Badge>;

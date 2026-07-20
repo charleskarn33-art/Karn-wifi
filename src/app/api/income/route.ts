@@ -2,16 +2,17 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getRequestProfile, jsonError, parsePagination } from "@/lib/api-helpers";
 import { incomeSchema } from "@/lib/validations/income";
 
-// GET /api/income?status=&search=&from=&to=&page=&pageSize=
+// GET /api/income?search=&from=&to=&page=&pageSize=
 // RLS on the `income` table already scopes rows to what the caller may see
 // (own entries for staff, all entries for manager/admin) -- this route just
-// adds search/filter/pagination convenience on top.
+// adds search/filter/pagination convenience on top. Income has no approval
+// workflow, so there's no status filter -- every entry is recorded and
+// counted immediately.
 export async function GET(request: NextRequest) {
   try {
     const { supabase } = await getRequestProfile();
     const { searchParams } = new URL(request.url);
     const { page, pageSize, from, to } = parsePagination(searchParams);
-    const status = searchParams.get("status");
     const search = searchParams.get("search")?.trim();
     const dateFrom = searchParams.get("from");
     const dateTo = searchParams.get("to");
@@ -19,13 +20,12 @@ export async function GET(request: NextRequest) {
     let query = supabase
       .from("income")
       .select(
-        "*, recorded_by_profile:profiles!income_recorded_by_fkey(id, full_name, email), approved_by_profile:profiles!income_approved_by_fkey(id, full_name, email)",
+        "*, recorded_by_profile:profiles!income_recorded_by_fkey(id, full_name, email)",
         { count: "exact" },
       )
       .order("created_at", { ascending: false })
       .range(from, to);
 
-    if (status) query = query.eq("status", status);
     if (dateFrom) query = query.gte("entry_date", dateFrom);
     if (dateTo) query = query.lte("entry_date", dateTo);
     if (search) {
@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/income -- creates a new draft income entry owned by the caller.
+// POST /api/income -- records a new income entry, counted immediately (no approval step).
 export async function POST(request: NextRequest) {
   try {
     const { supabase, profile } = await getRequestProfile();
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
         phone_number: parsed.data.phone_number || null,
         description: parsed.data.description || null,
         recorded_by: profile.id,
-        status: "draft",
+        status: "approved",
       })
       .select()
       .single();

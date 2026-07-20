@@ -11,7 +11,7 @@ export default async function ApprovalsPage() {
     <div className="space-y-6 py-6">
       <div>
         <h2 className="text-xl font-bold tracking-tight">Approvals</h2>
-        <p className="text-sm text-muted mt-1">Review and act on pending income and expense submissions.</p>
+        <p className="text-sm text-muted mt-1">Review and act on pending expense submissions.</p>
       </div>
       <ApprovalsInbox role={profile.role} />
     </div>

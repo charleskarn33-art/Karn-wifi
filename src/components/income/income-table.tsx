@@ -4,12 +4,11 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Plus, Send, Trash2, Pencil, Wallet } from "lucide-react";
+import { Plus, Trash2, Pencil, Wallet } from "lucide-react";
 import { usePaginatedResource } from "@/hooks/use-paginated-resource";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { SearchInput } from "@/components/ui/search-input";
-import { Select } from "@/components/ui/input";
 import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/ui/table";
 import {
   MobileCardList,
@@ -20,7 +19,6 @@ import {
   MobileCardActions,
 } from "@/components/ui/mobile-card-list";
 import { Pagination } from "@/components/ui/pagination";
-import { IncomeStatusBadge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { TableSkeleton } from "@/components/ui/skeleton";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -29,43 +27,30 @@ import type { IncomeWithRelations, UserRole } from "@/types/database";
 export function IncomeTable({ currentUserId, role }: { currentUserId: string; role: UserRole }) {
   const router = useRouter();
   const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("");
 
   const { data, count, page, setPage, pageSize, loading, refetch } = usePaginatedResource<IncomeWithRelations>({
     endpoint: "/api/income",
-    params: { search, status },
+    params: { search },
   });
 
-  async function submitEntry(id: string) {
-    const res = await fetch(`/api/income/${id}/submit`, { method: "POST" });
-    const json = await res.json();
-    if (!res.ok) return toast.error(json.error);
-    toast.success("Submitted for approval");
-    refetch();
-  }
-
   async function deleteEntry(id: string) {
-    if (!confirm("Delete this draft income entry?")) return;
+    if (!confirm("Delete this income entry?")) return;
     const res = await fetch(`/api/income/${id}`, { method: "DELETE" });
     const json = await res.json();
     if (!res.ok) return toast.error(json.error);
-    toast.success("Draft deleted");
+    toast.success("Entry deleted");
     refetch();
   }
 
   return (
     <Card>
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-1 flex-col gap-3 sm:flex-row">
-          <SearchInput value={search} onChange={setSearch} placeholder="Search customer, phone, package..." className="sm:max-w-xs" />
-          <Select value={status} onChange={(e) => setStatus(e.target.value)} className="sm:max-w-[180px]">
-            <option value="">All statuses</option>
-            <option value="draft">Draft</option>
-            <option value="submitted">Submitted</option>
-            <option value="approved">Approved</option>
-            <option value="rejected">Rejected</option>
-          </Select>
-        </div>
+        <SearchInput
+          value={search}
+          onChange={setSearch}
+          placeholder="Search customer, phone, package..."
+          className="flex-1 sm:max-w-xs"
+        />
         <Button className="w-full sm:w-auto" onClick={() => router.push("/income/new")}>
           <Plus className="h-4 w-4" /> New Income
         </Button>
@@ -88,8 +73,7 @@ export function IncomeTable({ currentUserId, role }: { currentUserId: string; ro
         <>
           <MobileCardList>
             {data.map((entry) => {
-              const isOwner = entry.recorded_by === currentUserId;
-              const editable = isOwner && (entry.status === "draft" || entry.status === "rejected");
+              const editable = entry.recorded_by === currentUserId || role === "admin";
               return (
                 <MobileCardRow key={entry.id}>
                   <MobileCardHeader>
@@ -99,10 +83,9 @@ export function IncomeTable({ currentUserId, role }: { currentUserId: string; ro
                       </Link>
                       <p className="text-xs text-muted">{entry.voucher_package}</p>
                     </div>
-                    <IncomeStatusBadge status={entry.status} />
+                    <p className="font-medium">{formatCurrency(entry.amount)}</p>
                   </MobileCardHeader>
                   <MobileCardMeta>
-                    <MobileCardMetaItem label="Amount" value={formatCurrency(entry.amount)} />
                     <MobileCardMetaItem label="Method" value={<span className="capitalize">{entry.payment_method.replace("_", " ")}</span>} />
                     <MobileCardMetaItem label="Date" value={formatDate(entry.entry_date)} />
                     {role !== "staff" && (
@@ -114,11 +97,6 @@ export function IncomeTable({ currentUserId, role }: { currentUserId: string; ro
                       <Button size="icon" variant="outline" title="Edit" onClick={() => router.push(`/income/${entry.id}`)}>
                         <Pencil className="h-4 w-4" />
                       </Button>
-                      {entry.status === "draft" && (
-                        <Button size="icon" variant="outline" title="Submit" onClick={() => submitEntry(entry.id)}>
-                          <Send className="h-4 w-4" />
-                        </Button>
-                      )}
                       <Button size="icon" variant="outline" title="Delete" onClick={() => deleteEntry(entry.id)}>
                         <Trash2 className="h-4 w-4 text-danger-500" />
                       </Button>
@@ -138,14 +116,12 @@ export function IncomeTable({ currentUserId, role }: { currentUserId: string; ro
                 <Th>Method</Th>
                 <Th>Date</Th>
                 {role !== "staff" && <Th>Recorded By</Th>}
-                <Th>Status</Th>
                 <Th className="text-right">Actions</Th>
               </Tr>
             </Thead>
             <Tbody>
               {data.map((entry) => {
-                const isOwner = entry.recorded_by === currentUserId;
-                const editable = isOwner && (entry.status === "draft" || entry.status === "rejected");
+                const editable = entry.recorded_by === currentUserId || role === "admin";
                 return (
                   <Tr key={entry.id}>
                     <Td className="font-medium">
@@ -160,20 +136,12 @@ export function IncomeTable({ currentUserId, role }: { currentUserId: string; ro
                     <Td>{formatDate(entry.entry_date)}</Td>
                     {role !== "staff" && <Td>{entry.recorded_by_profile?.full_name ?? "—"}</Td>}
                     <Td>
-                      <IncomeStatusBadge status={entry.status} />
-                    </Td>
-                    <Td>
                       <div className="flex justify-end gap-1.5">
                         {editable && (
                           <>
                             <Button size="icon" variant="outline" title="Edit" onClick={() => router.push(`/income/${entry.id}`)}>
                               <Pencil className="h-4 w-4" />
                             </Button>
-                            {entry.status === "draft" && (
-                              <Button size="icon" variant="outline" title="Submit" onClick={() => submitEntry(entry.id)}>
-                                <Send className="h-4 w-4" />
-                              </Button>
-                            )}
                             <Button size="icon" variant="outline" title="Delete" onClick={() => deleteEntry(entry.id)}>
                               <Trash2 className="h-4 w-4 text-danger-500" />
                             </Button>

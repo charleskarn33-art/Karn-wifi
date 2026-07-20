@@ -79,7 +79,6 @@ export interface Income {
 
 export interface IncomeWithRelations extends Income {
   recorded_by_profile?: Pick<Profile, "id" | "full_name" | "email"> | null;
-  approved_by_profile?: Pick<Profile, "id" | "full_name" | "email"> | null;
 }
 
 export interface Expense {

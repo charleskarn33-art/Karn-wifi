@@ -12,9 +12,7 @@ export async function GET(_request: NextRequest, { params }: Params) {
     const { supabase } = await getRequestProfile();
     const { data, error } = await supabase
       .from("income")
-      .select(
-        "*, recorded_by_profile:profiles!income_recorded_by_fkey(id, full_name, email), approved_by_profile:profiles!income_approved_by_fkey(id, full_name, email)",
-      )
+      .select("*, recorded_by_profile:profiles!income_recorded_by_fkey(id, full_name, email)")
       .eq("id", id)
       .single();
     if (error) throw error;
@@ -24,8 +22,9 @@ export async function GET(_request: NextRequest, { params }: Params) {
   }
 }
 
-// PATCH -- edit a draft/rejected income entry's fields (owner only; RLS +
-// enforce_income_workflow trigger reject anything else).
+// PATCH -- edit an income entry's fields (owner or admin only; RLS +
+// enforce_income_ownership trigger reject anything else). Income has no
+// approval workflow, so this is available any time, not just while "draft".
 export async function PATCH(request: NextRequest, { params }: Params) {
   try {
     const { id } = await params;
@@ -54,7 +53,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   }
 }
 
-// DELETE -- remove a draft income entry (owner) or any entry (admin); RLS enforces this.
+// DELETE -- remove an income entry (owner or admin); RLS enforces this.
 export async function DELETE(_request: NextRequest, { params }: Params) {
   try {
     const { id } = await params;

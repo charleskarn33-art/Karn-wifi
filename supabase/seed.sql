@@ -1,7 +1,8 @@
 -- supabase/seed.sql
 -- Local development seed data, run automatically by `supabase db reset`.
--- Creates 3 demo accounts (admin, manager, staff) and sample income/expense
--- records covering every workflow status. DO NOT run against production.
+-- Creates 3 demo accounts (admin, manager, staff), sample income entries
+-- (recorded immediately, no approval workflow), and sample expenses covering
+-- every expense workflow status. DO NOT run against production.
 --
 -- Demo logins (password for all three: Passw0rd!):
 --   admin@karnwifi.test
@@ -26,20 +27,15 @@ on conflict (id) do nothing;
 update public.profiles set role = 'admin' where id = '11111111-1111-1111-1111-111111111111';
 update public.profiles set role = 'manager' where id = '22222222-2222-2222-2222-222222222222';
 
--- 3. Sample income entries across every status.
-insert into public.income (customer_name, phone_number, voucher_package, amount, payment_method, description, recorded_by, entry_date, status, submitted_at, approved_by, approved_at)
+-- 3. Sample income entries. Income has no approval workflow -- every entry
+--    is recorded and counted immediately (status defaults to 'approved').
+insert into public.income (customer_name, phone_number, voucher_package, amount, payment_method, description, recorded_by, entry_date)
 values
-  ('John Mwangi', '+254712345678', 'Daily 5GB', 50, 'mpesa', 'Regular customer', '33333333-3333-3333-3333-333333333333', current_date, 'approved', now() - interval '2 days', '22222222-2222-2222-2222-222222222222', now() - interval '2 days'),
-  ('Grace Wanjiru', '+254722334455', 'Weekly 20GB', 300, 'cash', null, '33333333-3333-3333-3333-333333333333', current_date, 'approved', now() - interval '1 day', '22222222-2222-2222-2222-222222222222', now() - interval '1 day'),
-  ('Peter Otieno', '+254733445566', 'Monthly Unlimited', 1500, 'bank_transfer', 'Corporate client', '33333333-3333-3333-3333-333333333333', current_date - 1, 'approved', now() - interval '3 days', '11111111-1111-1111-1111-111111111111', now() - interval '3 days'),
-  ('Mary Achieng', '+254744556677', 'Daily 2GB', 20, 'mpesa', null, '33333333-3333-3333-3333-333333333333', current_date, 'submitted', now(), null, null),
-  ('James Kimani', '+254755667788', 'Weekly 10GB', 150, 'cash', 'Needs receipt confirmation', '33333333-3333-3333-3333-333333333333', current_date - 2, 'rejected', now() - interval '4 days', null, null);
-
-update public.income set rejected_by = '22222222-2222-2222-2222-222222222222', rejected_at = now() - interval '4 days', rejection_reason = 'Amount does not match M-Pesa statement'
-where customer_name = 'James Kimani';
-
-insert into public.income (customer_name, phone_number, voucher_package, amount, payment_method, recorded_by, entry_date, status)
-values ('Lucy Njeri', '+254766778899', 'Daily 5GB', 50, 'mpesa', '33333333-3333-3333-3333-333333333333', current_date, 'draft');
+  ('John Mwangi', '+254712345678', 'Daily 5GB', 50, 'mpesa', 'Regular customer', '33333333-3333-3333-3333-333333333333', current_date),
+  ('Grace Wanjiru', '+254722334455', 'Weekly 20GB', 300, 'cash', null, '33333333-3333-3333-3333-333333333333', current_date),
+  ('Peter Otieno', '+254733445566', 'Monthly Unlimited', 1500, 'bank_transfer', 'Corporate client', '33333333-3333-3333-3333-333333333333', current_date - 1),
+  ('Mary Achieng', '+254744556677', 'Daily 2GB', 20, 'mpesa', null, '33333333-3333-3333-3333-333333333333', current_date),
+  ('Lucy Njeri', '+254766778899', 'Daily 5GB', 50, 'mpesa', null, '33333333-3333-3333-3333-333333333333', current_date);
 
 -- 4. Sample expenses across every workflow stage.
 insert into public.expenses (category, amount, description, requested_by, entry_date, status, submitted_at, manager_approved_by, manager_approved_at, admin_approved_by, admin_approved_at)

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Wallet, TrendingUp, Receipt, PiggyBank, Clock, ClipboardList, Landmark } from "lucide-react";
+import { Wallet, TrendingUp, Receipt, PiggyBank, ClipboardList, Landmark } from "lucide-react";
 import { getDashboardData } from "@/lib/dashboard";
 import { requireAuth } from "@/lib/auth";
 import { StatCard } from "@/components/ui/stat-card";
@@ -74,13 +74,6 @@ export default async function DashboardPage() {
           value={formatCurrency(stats.netProfit)}
           icon={PiggyBank}
           tone={stats.netProfit >= 0 ? "success" : "danger"}
-        />
-        <StatCard
-          label="Pending Income"
-          value={String(stats.pendingIncomeCount)}
-          hint={formatCurrency(stats.pendingIncomeAmount)}
-          icon={Clock}
-          tone="warning"
         />
         <StatCard
           label="Pending Expense Requests"

@@ -1,8 +1,9 @@
 -- 0008_rls_policies.sql
 -- Row Level Security: users only ever see/touch what their role permits.
 -- Table-level policies define WHO can read/write which ROWS; the detailed
--- workflow state-machine rules live in the BEFORE UPDATE trigger functions
--- (enforce_income_workflow / enforce_expense_workflow) defined earlier.
+-- expense approval state-machine rules live in the BEFORE UPDATE trigger
+-- function (enforce_expense_workflow) defined earlier. Income has no
+-- approval workflow (enforce_income_ownership just pins ownership/status).
 
 alter table public.profiles enable row level security;
 alter table public.income enable row level security;
@@ -38,7 +39,9 @@ with check (public.is_admin());
 -- both of which run as SECURITY DEFINER / superuser and bypass RLS.
 
 -- ---------------------------------------------------------------------
--- income: staff see only their own entries; managers/admins see all.
+-- income: staff see only their own entries; managers/admins see all (for
+-- reporting). No approval workflow -- an entry is recorded and counted
+-- immediately; only its owner or an admin may edit/delete it afterwards.
 -- ---------------------------------------------------------------------
 create policy income_select
 on public.income for select
@@ -48,18 +51,18 @@ using (recorded_by = auth.uid() or public.is_manager_or_admin());
 create policy income_insert
 on public.income for insert
 to authenticated
-with check (recorded_by = auth.uid() and status = 'draft');
+with check (recorded_by = auth.uid());
 
 create policy income_update
 on public.income for update
 to authenticated
-using (recorded_by = auth.uid() or public.is_manager_or_admin())
-with check (recorded_by = auth.uid() or public.is_manager_or_admin());
+using (recorded_by = auth.uid() or public.is_admin())
+with check (recorded_by = auth.uid() or public.is_admin());
 
 create policy income_delete
 on public.income for delete
 to authenticated
-using ((recorded_by = auth.uid() and status = 'draft') or public.is_admin());
+using (recorded_by = auth.uid() or public.is_admin());
 
 -- ---------------------------------------------------------------------
 -- expenses: staff see only their own; managers/admins see all (managers
