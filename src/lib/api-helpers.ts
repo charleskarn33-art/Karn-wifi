@@ -31,14 +31,27 @@ export async function getRequestProfile() {
   return { supabase, profile: profile as Profile };
 }
 
+function hasStringMessage(value: unknown): value is { message: string } {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "message" in value &&
+    typeof (value as { message: unknown }).message === "string"
+  );
+}
+
 export function jsonError(error: unknown) {
   if (error instanceof ApiError) {
     return NextResponse.json({ error: error.message }, { status: error.status });
   }
-  // Postgres errors raised via RAISE EXCEPTION in workflow triggers surface
-  // here as generic errors -- forward their message so the UI can show why
-  // an action (e.g. an out-of-order approval) was rejected.
-  const message = error instanceof Error ? error.message : "Unexpected error";
+  // Postgres errors raised via RAISE EXCEPTION in workflow triggers (and
+  // RLS policy violations) surface here as the `error` from a Supabase
+  // query -- postgrest-js only wraps that in a real `Error` instance when
+  // `.throwOnError()` is used, which we don't; otherwise it's a plain
+  // { message, details, hint, code } object. Check for a string `message`
+  // on ANY object, not just `instanceof Error`, or these get silently
+  // replaced with a useless generic fallback.
+  const message = error instanceof Error || hasStringMessage(error) ? error.message : "Unexpected error";
   return NextResponse.json({ error: message }, { status: 400 });
 }
 
