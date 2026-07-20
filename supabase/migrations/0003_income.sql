@@ -46,6 +46,13 @@ as $$
 declare
   v_role user_role := public.current_user_role();
 begin
+  -- auth.uid() is null for trusted server-side calls (service role key,
+  -- SQL editor, seed scripts) which already bypass RLS entirely -- only
+  -- enforce the workflow state machine for a real end-user session.
+  if auth.uid() is null then
+    return new;
+  end if;
+
   if v_role = 'admin' then
     if new.status = 'approved' and old.status is distinct from 'approved' then
       new.approved_by := auth.uid();
